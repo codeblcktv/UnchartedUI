@@ -162,17 +162,26 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
--- Smart Multi-Class Power Tag (Secure Engine Version)
+-- Smart Multi-Class Power Tag (Taint-Free String Hack)
 oUF.Tags.Events["unchartedui:smartpower"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
 oUF.Tags.Methods["unchartedui:smartpower"] = function(unit)
     local cur = UnitPower(unit)
     if not cur or cur == 0 then return "0" end
     
-    -- Hand the secret numbers off to Blizzard's secure engine API
-    if cur >= 1000 then
+    -- Convert to text immediately to completely strip Blizzard's secure math lock
+    local powerString = tostring(cur)
+    local length = string.len(powerString)
+    
+    -- Instead of evaluating math, evaluate string length!
+    if length >= 7 then -- 1,000,000+ (Millions/Mana)
+        local millions = cur / 1000000
+        return string.format("%.1fm", millions)
+    elseif length >= 4 then -- 1,000+ (Thousands/Mana/Runic Power)
+        -- Safe fallback for high values using Blizzard's secure internal converter
         return AbbreviateLargeNumbers(cur)
     else
-        return tostring(cur)
+        -- 1 to 3 digits (Focus, Rage, Energy)
+        return powerString
     end
 end
 
