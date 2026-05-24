@@ -162,19 +162,6 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
--- Safe Core Power Tag (100% Mathless Version)
-oUF.Tags.Events["curpp"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
-oUF.Tags.Methods["curpp"] = function(unit)
-    -- Fetch the power and instantly force it to a plain text string wrapper
-    local rawPower = UnitPower(unit)
-    local powerString = tostring(rawPower)
-    
-    -- Use logical fallback matching instead of '==' or '<=' math checks
-    local finalDisplay = (powerString ~= "nil" and powerString ~= "0" and powerString) or "0"
-    
-    return finalDisplay
-end
-
 -- Name tag — truncated to 16 chars
 oUF.Tags.Events["unchartedui:name"] = "UNIT_NAME_UPDATE"
 oUF.Tags.Methods["unchartedui:name"] = function(unit)
@@ -294,7 +281,7 @@ local function Style(self, unit)
     powerTxt:SetTextColor(1, 1, 1, 0.9)
     
     -- Let the safe tag handler update the text layout automatically
-    self:Tag(powerTxt, "[curpp]")
+    self:Tag(powerTxt, "[power]")
     
     -- TAINT-FREE DIRECT HANDLER: Checks power type instead of comparing secure numbers
     power.PostUpdate = function(bar, unit, cur, max)
