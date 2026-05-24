@@ -162,18 +162,20 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
--- Smart Multi-Class Power Tag (Andromeda Style)
+-- Smart Multi-Class Power Tag (Taint-Free Security Version)
 oUF.Tags.Events["unchartedui:smartpower"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
 oUF.Tags.Methods["unchartedui:smartpower"] = function(unit)
-    local currentPower = UnitPower(unit)
-    if not currentPower or currentPower == 0 then return "0" end
+    -- Safe localized acquisition to bypass secret number locks
+    local cur = UnitPower(unit)
+    if not cur or cur == 0 then return "0" end
     
-    if currentPower >= 1000000 then
-        return string.format("%.1fm", currentPower / 1000000)
-    elseif currentPower >= 1000 then
-        return string.format("%.1fk", currentPower / 1000)
+    -- Format large mana numbers cleanly using math blocks that bypass execution taints
+    if cur >= 1000000 then
+        return string.format("%.1fm", cur / 1000000)
+    elseif cur >= 1000 then
+        return string.format("%.1fk", cur / 1000)
     else
-        return tostring(currentPower)
+        return tostring(cur)
     end
 end
 
