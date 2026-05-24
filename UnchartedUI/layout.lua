@@ -330,22 +330,32 @@ local function Style(self, unit)
         self.ClassPower = cp
     end
 
-    -- ---- Aura Tracking Grid (Player Only) ----
+-- ---- Aura Tracking Grid (Player Only) ----
     if unit == "player" then
         local buffs = CreateFrame("Frame", nil, self)
-        -- Elevated to 26 pixels to safely float above your player name text
         buffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 26)
         buffs:SetSize(W, 26)
-        buffs.size = 22      -- Square pixel dimensions matching the target icons
-        buffs.gap = 4        -- Spacing between icons
+        buffs.size = 22      
+        buffs.gap = 4        
         buffs["growth-y"] = "UP"
         buffs["growth-x"] = "RIGHT"
         
-        -- Route it through our existing Andromeda icon styling function
         buffs.PostCreateIcon = PostCreateIcon
+        buffs.filter = "HELPFUL"
         
-        -- Filter it to ONLY show helpful buffs you cast on yourself
-        buffs.filter = "HELPFUL" 
+        -- FILTER: Only passes spells that exist in our whitelist matrix
+        buffs.FilterAura = function(element, unit, button, name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellID)
+            local _, classToken = UnitClass("player")
+            local classWhitelist = CLASS_AURA_WHITELISTS[classToken]
+            local globalWhitelist = CLASS_AURA_WHITELISTS["GLOBAL"]
+            
+            if (classWhitelist and classWhitelist[name]) or (globalWhitelist and globalWhitelist[name]) then
+                return true  -- Show it!
+            else
+                return false -- Hide it!
+            end
+        end
+        
         self.Buffs = buffs
     end
 
