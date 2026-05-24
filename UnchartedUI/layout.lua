@@ -377,36 +377,43 @@ local pet = oUF:Spawn("pet", "UnchartedUI_Pet")
 pet:SetPoint("TOP", player, "BOTTOM", PET_X, -(CAST_GAP + CAST_H + PET_GAP))
 
 -- -------------------------------------------------------
--- Hide Blizzard's default unit frames
--- Must be done after PLAYER_LOGIN so frames exist
+-- Hide Blizzard's default unit frames (Modern Taint-Free Method)
 -- -------------------------------------------------------
 local hideFrame = CreateFrame("Frame")
 hideFrame:RegisterEvent("PLAYER_LOGIN")
 hideFrame:SetScript("OnEvent", function()
-    -- Unregister events so Blizzard stops trying to update these
-    if PlayerFrame then
-        PlayerFrame:UnregisterAllEvents()
-        PlayerFrame:Hide()
-        PlayerFrame.Show = function() end  -- prevent Blizzard re-showing it
+    -- 1. Use oUF's built-in engine to hide the core unit frames safely
+    if oUF and oUF.HideBlizzard then
+        oUF:HideBlizzard("player")
+        oUF:HideBlizzard("target")
+        oUF:HideBlizzard("pet")
+    else
+        -- Fallback visibility driver method if oUF hook is bypassed
+        local framesToHide = {
+            "PlayerFrame",
+            "TargetFrame",
+            "PetFrame",
+        }
+        for _, frameName in ipairs(framesToHide) do
+            local f = _G[frameName]
+            if f then
+                f:UnregisterAllEvents()
+                RegisterAttributeDriver(f, "state-visibility", "hide")
+            end
+        end
     end
-    if TargetFrame then
-        TargetFrame:UnregisterAllEvents()
-        TargetFrame:Hide()
-        TargetFrame.Show = function() end
+
+    -- 2. Hide Modern Retail Castbar (PlayerCastingBarFrame)
+    if PlayerCastingBarFrame then
+        PlayerCastingBarFrame:UnregisterAllEvents()
+        RegisterAttributeDriver(PlayerCastingBarFrame, "state-visibility", "hide")
+        PlayerCastingBarFrame:Hide()
     end
-    if PetFrame then
-        PetFrame:UnregisterAllEvents()
-        PetFrame:Hide()
-        PetFrame.Show = function() end
-    end
-    if CastingBarFrame then
-        CastingBarFrame:UnregisterAllEvents()
-        CastingBarFrame:Hide()
-        CastingBarFrame.Show = function() end
-    end
+
+    -- 3. Hide Target of Target
     if TargetFrameToT then
+        RegisterAttributeDriver(TargetFrameToT, "state-visibility", "hide")
         TargetFrameToT:Hide()
-        TargetFrameToT.Show = function() end
     end
 end)
 
