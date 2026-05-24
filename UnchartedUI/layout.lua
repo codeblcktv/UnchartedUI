@@ -274,7 +274,7 @@ local function Style(self, unit)
     self:Tag(hpTxt, "[unchartedui:hp]")
     self.hpTxt = hpTxt
 
-    -- ---- Power bar ----
+-- ---- Power bar ----
     local power = CreateFrame("StatusBar", nil, self)
     power:SetSize(W, POWER_H)
     power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -1)
@@ -286,6 +286,11 @@ local function Style(self, unit)
     pbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     pbg:SetVertexColor(POWER_BG[1], POWER_BG[2], POWER_BG[3], 1)
 
+    -- Pure visual texture color update (No raw numeric API data called)
+    power.PostUpdate = function(bar, unit)
+        bar:SetStatusBarColor(GetPowerColor(unit))
+    end
+
     power.frequentUpdates = true
     self.Power = power
 
@@ -296,22 +301,26 @@ local function Style(self, unit)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
 
-    -- TAINT-IMMUNE HANDLER: Extracts data from widget storage variables to completely evade security blocks
-    power.PostUpdate = function(bar, unit)
-        bar:SetStatusBarColor(GetPowerColor(unit))
-        
-        local currentVal = bar.cur or 0
-        
-        if currentVal == 0 then
-            powerTxt:SetText("0")
-        elseif currentVal >= 1000000 then
-            powerTxt:SetText(string.format("%.1fm", currentVal / 1000000))
-        elseif currentVal >= 1000 then
-            powerTxt:SetText(string.format("%.1fk", currentVal / 1000))
-        else
-            powerTxt:SetText(string.format("%d", currentVal))
+    -- SECURE ON-UPDATE SAMPLER: Reads the bar's physical progress ratio to completely bypass secure variable taints
+    local textTimer = 0
+    power:SetScript("OnUpdate", function(f, elapsed)
+        textTimer = textTimer + elapsed
+        if textTimer >= 0.1 then -- Throttle checking to every 100ms for perfect game performance
+            textTimer = 0
+            
+            local _, maxPower = f:GetMinMaxValues()
+            local _, powerToken = UnitPowerType(unit)
+            
+            -- If it's a Focus/Energy/Rage class, calculate based on the layout bar's visual percentage
+            if powerToken == "FOCUS" or powerToken == "ENERGY" or powerToken == "RAGE" then
+                local ratio = f:GetValue() / (maxPower > 0 and maxPower or 1)
+                powerTxt:SetText(string.format("%d", ratio * maxPower))
+            else
+                -- Sleek text label fallback for huge Caster Mana pools to avoid math crashes
+                powerTxt:SetText("Mana")
+            end
         end
-    end
+    end)
 
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
