@@ -381,7 +381,6 @@ local function Style(self, unit)
             
             -- Safe local reference check to capture either naming variation
             local whitelistMatrix = CLASS_AURA_WHITELISTS or CLASS_AURA_WHITELIST
-            if not whitelistMatrix then return false end -- absolute safety fallback
             
             local classWhitelist = whitelistMatrix[classToken]
             local globalWhitelist = whitelistMatrix["GLOBAL"]
