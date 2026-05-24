@@ -110,19 +110,6 @@ end
 -- -------------------------------------------------------
 -- Custom oUF tags
 -- -------------------------------------------------------
--- Helper function to format large numbers to short values (e.g., 12500 -> 12.5k)
-local function FormatShortValue(value)
-    if not value then return "" end
-    if value >= 1e6 then
-        return string.format("%.1fm", value / 1e6)
-    elseif value >= 1e3 then
-        return string.format("%.1fk", value / 1e3)
-    elseif type(value) == "number" or type(value) == "string" then
-        return tostring(value)
-    end
-    return ""
-end
-
 -- Health percent tag
 oUF.Tags.Events["unchartedui:hp"] = "UNIT_HEALTH UNIT_MAXHEALTH"
 oUF.Tags.Methods["unchartedui:hp"] = function(unit)
@@ -132,14 +119,6 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     local pct = UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)
     if not pct then return "" end
     return string.format("%d%%", pct)
-end
-
--- Power Text tag (Displays actual energy/mana formatted to Short Values like 12.5k)
-oUF.Tags.Events["unchartedui:power"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
-oUF.Tags.Methods["unchartedui:power"] = function(unit)
-    local currentPower = UnitPower(unit)
-    if not currentPower then return "" end
-    return FormatShortValue(currentPower)
 end
 
 -- Name tag — truncated to 16 chars
@@ -237,7 +216,7 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    self:Tag(powerTxt, "[unchartedui:power]")
+    self:Tag(powerTxt, "[curpp]")
 
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
