@@ -296,7 +296,7 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    self:Tag(powerTxt, "[unchartedui:smartpower]")
+    self:Tag(powerTxt, "[shortpower]")
 
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
