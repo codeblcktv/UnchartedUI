@@ -162,18 +162,15 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
--- Smart Multi-Class Power Tag (Taint-Free Security Version)
+-- Smart Multi-Class Power Tag (Secure Engine Version)
 oUF.Tags.Events["unchartedui:smartpower"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
 oUF.Tags.Methods["unchartedui:smartpower"] = function(unit)
-    -- Safe localized acquisition to bypass secret number locks
     local cur = UnitPower(unit)
     if not cur or cur == 0 then return "0" end
     
-    -- Format large mana numbers cleanly using math blocks that bypass execution taints
-    if cur >= 1000000 then
-        return string.format("%.1fm", cur / 1000000)
-    elseif cur >= 1000 then
-        return string.format("%.1fk", cur / 1000)
+    -- Use Blizzard's secure engine function to bypass math comparisons on secret numbers
+    if cur >= 1000 then
+        return AbbreviateLargeNumbers(cur)
     else
         return tostring(cur)
     end
@@ -296,7 +293,7 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    self:Tag(powerTxt, "[shortpower]")
+    self:Tag(powerTxt, "[unchartedui:smartpower]")
 
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
