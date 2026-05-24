@@ -254,7 +254,7 @@ local function Style(self, unit)
     self:Tag(hpTxt, "[unchartedui:hp]")
     self.hpTxt = hpTxt
 
-  -- ---- Power bar ----
+-- ---- Power bar ----
     local power = CreateFrame("StatusBar", nil, self)
     power:SetSize(W, POWER_H)
     power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -1)
@@ -266,10 +266,6 @@ local function Style(self, unit)
     pbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     pbg:SetVertexColor(POWER_BG[1], POWER_BG[2], POWER_BG[3], 1)
 
-    power.PostUpdate = function(bar, unit, cur, max)
-        bar:SetStatusBarColor(GetPowerColor(unit))
-    end
-
     power.frequentUpdates = true
     self.Power = power
 
@@ -279,26 +275,23 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    
-    -- Let the safe tag handler update the text layout automatically
-    self:Tag(powerTxt, "[power]")
-    
-    -- TAINT-FREE DIRECT HANDLER: Checks power type instead of comparing secure numbers
-    power.PostUpdate = function(bar, unit, cur, max)
+    -- We are deliberately NOT using self:Tag() here to keep things 100% stable
+
+    -- TAINT-FREE DIRECT HANDLER: Uses Blizzard's widget states directly to avoid math operators
+    power.PostUpdate = function(bar, unit)
         bar:SetStatusBarColor(GetPowerColor(unit))
         
-        -- If cur is scrubbed by security, grab a clean fallback string value immediately
-        local displayPower = cur or UnitPower(unit) or 0
-        local powerType = UnitPowerType(unit)
+        -- Safely extract what the frame is physically displaying right now
+        local currentVal = bar:GetValue() or 0
         
-        if displayPower == 0 then
+        if currentVal == 0 then
             powerTxt:SetText("0")
-        elseif powerType == 0 then -- 0 is always the engine constant for MANA (Large Pools)
-            -- Safe abbreviation without using math comparison operator symbols
-            powerTxt:SetText(string.format("%.1fk", displayPower / 1000))
+        elseif currentVal >= 1000000 then
+            powerTxt:SetText(string.format("%.1fm", currentVal / 1000000))
+        elseif currentVal >= 1000 then
+            powerTxt:SetText(string.format("%.1fk", currentVal / 1000))
         else
-            -- For Focus, Rage, and Energy, print it safely as a direct string
-            powerTxt:SetText(string.format("%d", displayPower))
+            powerTxt:SetText(string.format("%d", currentVal))
         end
     end
     
