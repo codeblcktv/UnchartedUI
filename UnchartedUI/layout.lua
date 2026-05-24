@@ -162,6 +162,14 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
+-- Safe Core Power Tag
+oUF.Tags.Events["curpp"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
+oUF.Tags.Methods["curpp"] = function(unit)
+    local cur = UnitPower(unit)
+    if not cur or cur == 0 then return "0" end
+    return tostring(cur)
+end
+
 -- Name tag — truncated to 16 chars
 oUF.Tags.Events["unchartedui:name"] = "UNIT_NAME_UPDATE"
 oUF.Tags.Methods["unchartedui:name"] = function(unit)
@@ -266,6 +274,10 @@ local function Style(self, unit)
     pbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     pbg:SetVertexColor(POWER_BG[1], POWER_BG[2], POWER_BG[3], 1)
 
+    power.PostUpdate = function(bar, unit, cur, max)
+        bar:SetStatusBarColor(GetPowerColor(unit))
+    end
+
     power.frequentUpdates = true
     self.Power = power
 
@@ -275,7 +287,9 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    -- REMOVED self:Tag() to completely eliminate layout engine tag confusion
+    
+    -- Let the safe tag handler update the text layout automatically
+    self:Tag(powerTxt, "[curpp]")
     
     -- TAINT-FREE DIRECT HANDLER: Checks power type instead of comparing secure numbers
     power.PostUpdate = function(bar, unit, cur, max)
