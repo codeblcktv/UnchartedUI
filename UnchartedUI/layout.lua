@@ -31,6 +31,11 @@ local PET_H      = 12    -- slim but visible health bar
 local PET_X      = 0     -- centered under player
 local PET_GAP    = 4     -- gap below castbar
 
+-- Class Power config (Combo points, Runes, Shards, etc.)
+local POWER_BAR_W = W      -- Total width matches the player frame (220px)
+local POWER_BAR_H = 6      -- Sleek, low-profile resource squares
+local POWER_BAR_Y = 10     -- Pixels to float above the player frame
+
 local FONT       = "Fonts\\FRIZQT__.TTF"
 local FONT_SIZE  = 10
 
@@ -257,6 +262,56 @@ local function Style(self, unit)
         self:Tag(name, "[unchartedui:targetname]")
     end
     self.Name = name
+
+    -- ---- Class Power Tracking Module (Player Only) ----
+    if unit == "player" then
+        local cp = {}
+        
+        -- Loop up to 7 max possible tracking points (e.g., Rogue/Feral combo points)
+        for i = 1, 7 do
+            local bar = CreateFrame("StatusBar", nil, self)
+            bar:SetHeight(POWER_BAR_H)
+            bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
+            
+            -- Set up clean 1px flat borders for each point container
+            AddBorder(bar)
+            
+            -- Set background backdrop for empty points
+            local bg = bar:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints(bar)
+            bg:SetTexture("Interface\\Buttons\\WHITE8x8")
+            bg:SetVertexColor(0.1, 0.1, 0.1, 0.8)
+            bar.bg = bg
+            
+            cp[i] = bar
+        end
+        
+        -- Handle spacing and scaling dynamically across the frame width
+        cp.PostUpdate = function(element, cur, max, hasMaxChanged, powerType)
+            if not max or max <= 0 then return end
+            
+            -- Dynamically distribute width depending on max points (e.g., 5 vs 6 vs 7 shards)
+            local gap = 3
+            local totalGaps = (max - 1) * gap
+            local pieceWidth = (POWER_BAR_W - totalGaps) / max
+            
+            for i = 1, max do
+                cp[i]:SetSize(pieceWidth, POWER_BAR_H)
+                cp[i]:ClearAllPoints()
+                if i == 1 then
+                    cp[i]:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, POWER_BAR_Y)
+                else
+                    cp[i]:SetPoint("LEFT", cp[i-1], "RIGHT", gap, 0)
+                end
+                
+                -- Andromeda styled custom class color accents
+                local r, g, b = GetClassColor("player")
+                cp[i]:SetStatusBarColor(r, g, b)
+            end
+        end
+        
+        self.ClassPower = cp
+    end
 
     -- ---- Aura Tracking Grid (Target Only) ----
     if unit == "target" then
