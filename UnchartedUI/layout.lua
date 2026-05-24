@@ -308,7 +308,7 @@ local function PetStyle(self, unit)
     health:SetSize(PET_W, PET_H)
     health:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
     health:SetStatusBarTexture(TEX)
-    health:SetStatusBarColor(0.67, 0.83, 0.45)
+    health:SetStatusBarColor(0.15, 0.75, 0.15)
 
     local hbg = health:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints(health)
@@ -317,7 +317,7 @@ local function PetStyle(self, unit)
 
     health.PostUpdate = function(bar, unit)
         bar:SetStatusBarTexture(TEX)
-        bar:SetStatusBarColor(0.67, 0.83, 0.45)
+        bar:SetStatusBarColor(0.15, 0.75, 0.15)
     end
 
     health.frequentUpdates = true
