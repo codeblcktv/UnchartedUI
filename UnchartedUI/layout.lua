@@ -262,7 +262,7 @@ local function Style(self, unit)
     if unit == "target" then
         local auras = CreateFrame("Frame", nil, self)
         -- Sits neatly flush 10 pixels directly above the target frame
-        auras:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 10)
+        auras:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 26)
         auras:SetSize(W, 26)
         auras.size = 22      -- Pixel size of individual icons
         auras.gap = 4        -- Spacing between buffs
