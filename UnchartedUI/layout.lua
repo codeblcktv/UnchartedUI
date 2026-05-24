@@ -254,7 +254,7 @@ local function Style(self, unit)
     self:Tag(hpTxt, "[unchartedui:hp]")
     self.hpTxt = hpTxt
 
-   -- ---- Power bar ----
+  -- ---- Power bar ----
     local power = CreateFrame("StatusBar", nil, self)
     power:SetSize(W, POWER_H)
     power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -1)
@@ -291,14 +291,7 @@ local function Style(self, unit)
             powerTxt:SetText(tostring(cur))
         end
     end
-    -- Power text — right side of the power bar
-    local powerTxt = power:CreateFontString(nil, "OVERLAY")
-    powerTxt:SetFont(FONT, FONT_SIZE - 1, "OUTLINE")
-    powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
-    powerTxt:SetJustifyH("RIGHT")
-    powerTxt:SetTextColor(1, 1, 1, 0.9)
-    self:Tag(powerTxt, "curpp")
-
+    
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
     name:SetFont(FONT, FONT_SIZE, "")
