@@ -274,7 +274,7 @@ local function Style(self, unit)
     self:Tag(hpTxt, "[unchartedui:hp]")
     self.hpTxt = hpTxt
 
--- ---- Power bar ----
+    -- ---- Power bar ----
     local power = CreateFrame("StatusBar", nil, self)
     power:SetSize(W, POWER_H)
     power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -1)
@@ -286,11 +286,6 @@ local function Style(self, unit)
     pbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     pbg:SetVertexColor(POWER_BG[1], POWER_BG[2], POWER_BG[3], 1)
 
-    -- Simple texture updater that performs zero code math comparisons
-    power.PostUpdate = function(bar, unit)
-        bar:SetStatusBarColor(GetPowerColor(unit))
-    end
-
     power.frequentUpdates = true
     self.Power = power
 
@@ -300,16 +295,12 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    
-    -- Assign our custom string-matching tag
-    self:Tag(powerTxt, "[unchartedui:securepower]")
 
-    -- TAINT-FREE DIRECT HANDLER: Uses Blizzard's widget states directly to avoid math operators
+    -- TAINT-IMMUNE HANDLER: Extracts data from widget storage variables to completely evade security blocks
     power.PostUpdate = function(bar, unit)
         bar:SetStatusBarColor(GetPowerColor(unit))
         
-        -- Safely extract what the frame is physically displaying right now
-        local currentVal = bar:GetValue() or 0
+        local currentVal = bar.cur or 0
         
         if currentVal == 0 then
             powerTxt:SetText("0")
@@ -321,7 +312,7 @@ local function Style(self, unit)
             powerTxt:SetText(string.format("%d", currentVal))
         end
     end
-    
+
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
     name:SetFont(FONT, FONT_SIZE, "")
@@ -404,12 +395,8 @@ local function Style(self, unit)
         
         buffs.FilterAura = function(element, unit, button, name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellID)
             local _, classToken = UnitClass("player")
-            
-            -- Safe local reference check to capture either naming variation
-            local whitelistMatrix = CLASS_AURA_WHITELISTS or CLASS_AURA_WHITELIST
-            
-            local classWhitelist = whitelistMatrix[classToken]
-            local globalWhitelist = whitelistMatrix["GLOBAL"]
+            local classWhitelist = CLASS_AURA_WHITELISTS[classToken]
+            local globalWhitelist = CLASS_AURA_WHITELISTS["GLOBAL"]
             
             if (classWhitelist and classWhitelist[name]) or (globalWhitelist and globalWhitelist[name]) then
                 return true  
