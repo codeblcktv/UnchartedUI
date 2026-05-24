@@ -1,0 +1,11 @@
+## Interface: 120005, 120004, 120003, 120002, 120001, 120000
+## X-Compatible-With: 120005
+## Title: |cff5B9BD5Uncharted|r|cffFFFFFFUI|r
+## Notes: oUF unit frames. Player and target to start.
+## Author: You
+## Version: 0.1.0
+## Dependencies: oUF
+## DefaultState: enabled
+## SavedVariables: UnchartedUIDB
+
+layout.lua
