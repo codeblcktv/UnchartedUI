@@ -266,6 +266,11 @@ local function Style(self, unit)
     pbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     pbg:SetVertexColor(POWER_BG[1], POWER_BG[2], POWER_BG[3], 1)
 
+    -- Simple, clean status bar color updater that doesn't read numerical values
+    power.PostUpdate = function(bar, unit)
+        bar:SetStatusBarColor(GetPowerColor(unit))
+    end
+
     power.frequentUpdates = true
     self.Power = power
 
@@ -275,7 +280,9 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    -- We are deliberately NOT using self:Tag() here to keep things 100% stable
+    
+    -- Use oUF's absolute built-in secure string formatter tag
+    self:Tag(powerTxt, "[curmaxp]")
 
     -- TAINT-FREE DIRECT HANDLER: Uses Blizzard's widget states directly to avoid math operators
     power.PostUpdate = function(bar, unit)
