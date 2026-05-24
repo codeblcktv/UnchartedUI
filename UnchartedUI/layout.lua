@@ -168,7 +168,7 @@ oUF.Tags.Methods["unchartedui:smartpower"] = function(unit)
     local cur = UnitPower(unit)
     if not cur or cur == 0 then return "0" end
     
-    -- Use Blizzard's secure engine function to bypass math comparisons on secret numbers
+    -- Hand the secret numbers off to Blizzard's secure engine API
     if cur >= 1000 then
         return AbbreviateLargeNumbers(cur)
     else
