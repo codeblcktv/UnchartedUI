@@ -378,8 +378,13 @@ local function Style(self, unit)
         
         buffs.FilterAura = function(element, unit, button, name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellID)
             local _, classToken = UnitClass("player")
-            local classWhitelist = CLASS_AURA_WHITELISTS[classToken]
-            local globalWhitelist = CLASS_AURA_WHITELISTS["GLOBAL"]
+            
+            -- Safe local reference check to capture either naming variation
+            local whitelistMatrix = CLASS_AURA_WHITELISTS or CLASS_AURA_WHITELIST
+            if not whitelistMatrix then return false end -- absolute safety fallback
+            
+            local classWhitelist = whitelistMatrix[classToken]
+            local globalWhitelist = whitelistMatrix["GLOBAL"]
             
             if (classWhitelist and classWhitelist[name]) or (globalWhitelist and globalWhitelist[name]) then
                 return true  
