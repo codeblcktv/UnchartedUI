@@ -138,7 +138,7 @@ end
 oUF.Tags.Events["unchartedui:power"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
 oUF.Tags.Methods["unchartedui:power"] = function(unit)
     local currentPower = UnitPower(unit)
-    if not currentPower or currentPower == 0 then return "" end
+    if not currentPower then return "" end
     return FormatShortValue(currentPower)
 end
 
@@ -147,6 +147,18 @@ oUF.Tags.Events["unchartedui:name"] = "UNIT_NAME_UPDATE"
 oUF.Tags.Methods["unchartedui:name"] = function(unit)
     local name = UnitName(unit) or ""
     if #name > 16 then return name:sub(1, 14) .. ".." end
+    return name
+end
+
+-- Target name + level
+oUF.Tags.Events["unchartedui:targetname"] = "UNIT_NAME_UPDATE UNIT_LEVEL"
+oUF.Tags.Methods["unchartedui:targetname"] = function(unit)
+    local name = UnitName(unit) or ""
+    if #name > 14 then name = name:sub(1, 12) .. ".." end
+    local level = UnitLevel(unit) or 0
+    if level > 0 then
+        return name .. " |cff888888" .. level .. "|r"
+    end
     return name
 end
 
