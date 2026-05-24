@@ -80,6 +80,42 @@ local POWER_COLORS = {
 }
 
 -- -------------------------------------------------------
+-- Dynamic Class-Based Aura Whitelists
+-- -------------------------------------------------------
+local CLASS_AURA_WHITELISTS = {
+    HUNTER = {
+        ["Bestial Wrath"]        = true,
+        ["Aspect of the Wild"]   = true,
+        ["Frenzy"]               = true,
+        ["Trueshot"]             = true,
+        ["Aspect of the Turtle"] = true,
+        ["Survival of the Fittest"] = true,
+    },
+    ROGUE = {
+        ["Adrenaline Rush"]      = true,
+        ["Shadow Blades"]        = true,
+        ["Slice and Dice"]       = true,
+        ["Evasion"]              = true,
+        ["Cloak of Shadows"]     = true,
+        ["Feint"]                = true,
+    },
+    PALADIN = {
+        ["Avenging Wrath"]       = true,
+        ["Shield of Vengeance"]  = true,
+        ["Divine Shield"]        = true,
+        ["Blessing of Protection"] = true,
+        ["Forbearance"]          = true,
+    },
+    -- Universal Buffs allowed for ALL characters
+    GLOBAL = {
+        ["Bloodlust"]            = true,
+        ["Heroism"]              = true,
+        ["Time Warp"]            = true,
+        ["Fury of the Aspects"]  = true,
+    }
+}
+
+-- -------------------------------------------------------
 -- Helpers
 -- -------------------------------------------------------
 local function GetClassColor(unit)
@@ -132,13 +168,11 @@ oUF.Tags.Methods["unchartedui:smartpower"] = function(unit)
     local currentPower = UnitPower(unit)
     if not currentPower or currentPower == 0 then return "0" end
     
-    -- If it's a massive power pool (like Mana), shorten it cleanly to 'k' or 'm'
     if currentPower >= 1000000 then
         return string.format("%.1fm", currentPower / 1000000)
     elseif currentPower >= 1000 then
         return string.format("%.1fk", currentPower / 1000)
     else
-        -- For Focus, Rage, and Energy, leave it as a clean raw integer
         return tostring(currentPower)
     end
 end
@@ -167,7 +201,6 @@ end
 -- Aura Styling Helper (Andromeda Style)
 -- -------------------------------------------------------
 local function PostCreateIcon(element, button)
-    -- Apply the dark, flat 1px border style
     Mixin(button, BackdropTemplateMixin)
     button:SetBackdrop({
         edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -175,15 +208,12 @@ local function PostCreateIcon(element, button)
     })
     button:SetBackdropBorderColor(BORDER_COL[1], BORDER_COL[2], BORDER_COL[3], 1)
     
-    -- Make the actual spell icon texture square and crisp
     button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     button.icon:SetDrawLayer("BACKGROUND", -1)
     
-    -- Style the expiration cooldown text overlay safely
     button.cooldown:SetReverse(true)
     button.cooldown:SetHideCountdownNumbers(false)
     
-    -- Style spell stack counts (like Lifebloom, Sunder Armor, etc.)
     button.count:SetFont(FONT, 10, "OUTLINE")
     button.count:ClearAllPoints()
     button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 1, 0)
@@ -264,7 +294,7 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    self:Tag(powerTxt, "[curpp]")
+    self:Tag(powerTxt, "[unchartedui:smartpower]")
 
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
@@ -280,20 +310,29 @@ local function Style(self, unit)
     end
     self.Name = name
 
+    -- ---- Aura Tracking Grid (Target Only) ----
+    if unit == "target" then
+        local auras = CreateFrame("Frame", nil, self)
+        auras:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 26)
+        auras:SetSize(W, 26)
+        auras.size = 22      
+        auras.gap = 4        
+        auras["growth-y"] = "UP"
+        auras["growth-x"] = "RIGHT"
+        
+        auras.PostCreateIcon = PostCreateIcon
+        self.Auras = auras
+    end
+
     -- ---- Class Power Tracking Module (Player Only) ----
     if unit == "player" then
         local cp = {}
-        
-        -- Loop up to 7 max possible tracking points (e.g., Rogue/Feral combo points)
         for i = 1, 7 do
             local bar = CreateFrame("StatusBar", nil, self)
             bar:SetHeight(POWER_BAR_H)
             bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
-            
-            -- Set up clean 1px flat borders for each point container
             AddBorder(bar)
             
-            -- Set background backdrop for empty points
             local bg = bar:CreateTexture(nil, "BACKGROUND")
             bg:SetAllPoints(bar)
             bg:SetTexture("Interface\\Buttons\\WHITE8x8")
@@ -303,11 +342,8 @@ local function Style(self, unit)
             cp[i] = bar
         end
         
-        -- Handle spacing and scaling dynamically across the frame width
         cp.PostUpdate = function(element, cur, max, hasMaxChanged, powerType)
             if not max or max <= 0 then return end
-            
-            -- Dynamically distribute width depending on max points (e.g., 5 vs 6 vs 7 shards)
             local gap = 3
             local totalGaps = (max - 1) * gap
             local pieceWidth = (POWER_BAR_W - totalGaps) / max
@@ -320,17 +356,14 @@ local function Style(self, unit)
                 else
                     cp[i]:SetPoint("LEFT", cp[i-1], "RIGHT", gap, 0)
                 end
-                
-                -- Andromeda styled custom class color accents
                 local r, g, b = GetClassColor("player")
                 cp[i]:SetStatusBarColor(r, g, b)
             end
         end
-        
         self.ClassPower = cp
     end
 
--- ---- Aura Tracking Grid (Player Only) ----
+    -- ---- Aura Tracking Grid (Player Only) ----
     if unit == "player" then
         local buffs = CreateFrame("Frame", nil, self)
         buffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 26)
@@ -343,36 +376,18 @@ local function Style(self, unit)
         buffs.PostCreateIcon = PostCreateIcon
         buffs.filter = "HELPFUL"
         
-        -- FILTER: Only passes spells that exist in our whitelist matrix
         buffs.FilterAura = function(element, unit, button, name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellID)
             local _, classToken = UnitClass("player")
             local classWhitelist = CLASS_AURA_WHITELISTS[classToken]
             local globalWhitelist = CLASS_AURA_WHITELISTS["GLOBAL"]
             
             if (classWhitelist and classWhitelist[name]) or (globalWhitelist and globalWhitelist[name]) then
-                return true  -- Show it!
+                return true  
             else
-                return false -- Hide it!
+                return false 
             end
         end
-        
         self.Buffs = buffs
-    end
-
-    -- ---- Aura Tracking Grid (Target Only) ----
-    if unit == "target" then
-        local auras = CreateFrame("Frame", nil, self)
-        -- Sits neatly flush 10 pixels directly above the target frame
-        auras:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 26)
-        auras:SetSize(W, 26)
-        auras.size = 22      -- Pixel size of individual icons
-        auras.gap = 4        -- Spacing between buffs
-        auras["growth-y"] = "UP"
-        auras["growth-x"] = "RIGHT"
-        
-        -- Link oUF to our layout style handler from Step 1
-        auras.PostCreateIcon = PostCreateIcon
-        self.Auras = auras
     end
 
     -- ---- Castbar — flush below the frame ----
@@ -389,7 +404,6 @@ local function Style(self, unit)
 
     AddBorder(cast)
 
-    -- Cast spell name
     local castName = cast:CreateFontString(nil, "OVERLAY")
     castName:SetFont(FONT, FONT_SIZE - 1, "")
     castName:SetPoint("LEFT",  cast, "LEFT",  20, 0)
@@ -398,7 +412,6 @@ local function Style(self, unit)
     castName:SetTextColor(1, 1, 1, 0.9)
     cast.Text = castName
 
-    -- Cast time remaining
     local castTime = cast:CreateFontString(nil, "OVERLAY")
     castTime:SetFont(FONT, FONT_SIZE - 1, "")
     castTime:SetPoint("RIGHT", cast, "RIGHT", -4, 0)
@@ -406,14 +419,12 @@ local function Style(self, unit)
     castTime:SetTextColor(0.85, 0.85, 0.85, 0.8)
     cast.Time = castTime
 
-    -- Spell icon left of castbar
     local castIcon = cast:CreateTexture(nil, "ARTWORK")
     castIcon:SetSize(CAST_H, CAST_H)
     castIcon:SetPoint("RIGHT", cast, "LEFT", -2, 0)
     castIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     cast.Icon = castIcon
 
-    -- Icon border
     local iconBorder = CreateFrame("Frame", nil, cast, "BackdropTemplate")
     iconBorder:SetSize(CAST_H + 2, CAST_H + 2)
     iconBorder:SetPoint("CENTER", castIcon, "CENTER", 0, 0)
@@ -432,7 +443,6 @@ local function Style(self, unit)
 
     self.Castbar = cast
 
-    -- ---- Tooltips ----
     self:HookScript("OnEnter", function(f)
         GameTooltip:SetOwner(f, "ANCHOR_TRACKING")
         GameTooltip:SetUnit(f.unit)
@@ -442,7 +452,6 @@ local function Style(self, unit)
         GameTooltip:Hide()
     end)
 
-    -- Frame size calculation
     self:SetSize(W, HEALTH_H + 1 + POWER_H)
 end
 
@@ -485,7 +494,6 @@ local function PetStyle(self, unit)
     self:Tag(name, "[unchartedui:name]")
     self.Name = name
 
-    -- ---- Tooltips ----
     self:HookScript("OnEnter", function(f)
         GameTooltip:SetOwner(f, "ANCHOR_TRACKING")
         GameTooltip:SetUnit(f.unit)
@@ -514,7 +522,7 @@ local pet = oUF:Spawn("pet", "UnchartedUI_Pet")
 pet:SetPoint("TOP", player, "BOTTOM", PET_X, -(CAST_GAP + CAST_H + PET_GAP))
 
 -- -------------------------------------------------------
--- Hide Blizzard's default unit frames (Modern Taint-Free Method)
+-- Hide Blizzard's default unit frames
 -- -------------------------------------------------------
 local hideFrame = CreateFrame("Frame")
 hideFrame:RegisterEvent("PLAYER_LOGIN")
