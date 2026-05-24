@@ -140,6 +140,33 @@ oUF.Tags.Methods["unchartedui:targetname"] = function(unit)
     end
     return name
 end
+
+-- -------------------------------------------------------
+-- Aura Styling Helper (Andromeda Style)
+-- -------------------------------------------------------
+local function PostCreateIcon(element, button)
+    -- Apply the dark, flat 1px border style
+    Mixin(button, BackdropTemplateMixin)
+    button:SetBackdrop({
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    button:SetBackdropBorderColor(BORDER_COL[1], BORDER_COL[2], BORDER_COL[3], 1)
+    
+    -- Make the actual spell icon texture square and crisp
+    button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    button.icon:SetDrawLayer("BACKGROUND", -1)
+    
+    -- Style the expiration cooldown text overlay safely
+    button.cooldown:SetReverse(true)
+    button.cooldown:SetHideCountdownNumbers(false)
+    
+    -- Style spell stack counts (like Lifebloom, Sunder Armor, etc.)
+    button.count:SetFont(FONT, 10, "OUTLINE")
+    button.count:ClearAllPoints()
+    button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 1, 0)
+end
+
 -- -------------------------------------------------------
 -- The main style function — called by oUF for each unit
 -- -------------------------------------------------------
@@ -230,6 +257,22 @@ local function Style(self, unit)
         self:Tag(name, "[unchartedui:targetname]")
     end
     self.Name = name
+
+    -- ---- Aura Tracking Grid (Target Only) ----
+    if unit == "target" then
+        local auras = CreateFrame("Frame", nil, self)
+        -- Sits neatly flush 10 pixels directly above the target frame
+        auras:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 10)
+        auras:SetSize(W, 26)
+        auras.size = 22      -- Pixel size of individual icons
+        auras.gap = 4        -- Spacing between buffs
+        auras["growth-y"] = "UP"
+        auras["growth-x"] = "RIGHT"
+        
+        -- Link oUF to our layout style handler from Step 1
+        auras.PostCreateIcon = PostCreateIcon
+        self.Auras = auras
+    end
 
     -- ---- Castbar — flush below the frame ----
     local cast = CreateFrame("StatusBar", nil, self)
