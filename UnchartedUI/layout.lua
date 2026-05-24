@@ -303,11 +303,6 @@ local function Style(self, unit)
     self:SetSize(W, HEALTH_H + 1 + POWER_H)
 end
 
-    
-    -- Frame size calculation
-    self:SetSize(W, HEALTH_H + 1 + POWER_H)
-end
-
 -- -------------------------------------------------------
 -- Pet frame style
 -- -------------------------------------------------------
