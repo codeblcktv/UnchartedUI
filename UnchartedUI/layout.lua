@@ -289,6 +289,21 @@ local function Style(self, unit)
 
     self.Castbar = cast
 
+    -- ---- Tooltips ----
+    self:HookScript("OnEnter", function(f)
+        GameTooltip:SetOwner(f, "ANCHOR_TRACKING")
+        GameTooltip:SetUnit(f.unit)
+        GameTooltip:Show()
+    end)
+    self:HookScript("OnLeave", function(f)
+        GameTooltip:Hide()
+    end)
+
+    -- Frame size calculation
+    self:SetSize(W, HEALTH_H + 1 + POWER_H)
+end
+
+    
     -- Frame size calculation
     self:SetSize(W, HEALTH_H + 1 + POWER_H)
 end
@@ -331,6 +346,16 @@ local function PetStyle(self, unit)
     name:SetJustifyH("LEFT")
     self:Tag(name, "[unchartedui:name]")
     self.Name = name
+
+    -- ---- Tooltips ----
+    self:HookScript("OnEnter", function(f)
+        GameTooltip:SetOwner(f, "ANCHOR_TRACKING")
+        GameTooltip:SetUnit(f.unit)
+        GameTooltip:Show()
+    end)
+    self:HookScript("OnLeave", function(f)
+        GameTooltip:Hide()
+    end)
 end
 
 -- -------------------------------------------------------
