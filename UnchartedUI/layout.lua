@@ -197,13 +197,13 @@ local function Style(self, unit)
 
     -- Health percent text — right side, only shows when damaged
     local hpTxt = health:CreateFontString(nil, "OVERLAY")
-    hpTxt:SetFont(FONT, FONT_SIZE, "")
+    hpTxt:SetFont(FONT, FONT_SIZE, "OUTLINE")
     hpTxt:SetPoint("RIGHT", health, "RIGHT", -3, 0)
     hpTxt:SetJustifyH("RIGHT")
     hpTxt:SetTextColor(1, 1, 1, 0.85)
     -- oUF tag: show percent only when < 100%
     -- Health text hidden at full health via mouseover (TODO: mouseover tag)
-    -- self:Tag(hpTxt, "[unchartedui:hp]")
+    self:Tag(hpTxt, "[unchartedui:hp]")
 
     -- ---- Power bar ----
     local power = CreateFrame("StatusBar", nil, self)
@@ -224,6 +224,14 @@ local function Style(self, unit)
 
     power.frequentUpdates = true
     self.Power = power
+
+    -- Power text — right side of the power bar
+    local powerTxt = power:CreateFontString(nil, "OVERLAY")
+    powerTxt:SetFont(FONT, FONT_SIZE - 1, "OUTLINE")
+    powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
+    powerTxt:SetJustifyH("RIGHT")
+    powerTxt:SetTextColor(1, 1, 1, 0.9)
+    self:Tag(powerTxt, "[unchartedui:power]")
 
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
@@ -297,21 +305,6 @@ local function Style(self, unit)
     cast.PostChannelStart = cast.PostCastStart
 
     self.Castbar = cast
-
-    -- ---- Mouseover: show health text on hover ----
-    self:HookScript("OnEnter", function(f)
-        if f.hpTxt then
-            if not CurveConstants or not CurveConstants.ScaleTo100 then return end
-            local pct = UnitHealthPercent(f.unit, true, CurveConstants.ScaleTo100)
-            if pct then
-                f.hpTxt:SetText(string.format("%d%%", pct))
-            end
-            f.hpTxt:Show()
-        end
-    end)
-    self:HookScript("OnLeave", function(f)
-        if f.hpTxt then f.hpTxt:Hide() end
-    end)
 
     -- ---- Frame size ----
     -- oUF sizes the frame; we need height = health + 1px gap + power
