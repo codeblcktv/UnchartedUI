@@ -126,6 +126,23 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
+-- Smart Multi-Class Power Tag (Andromeda Style)
+oUF.Tags.Events["unchartedui:smartpower"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
+oUF.Tags.Methods["unchartedui:smartpower"] = function(unit)
+    local currentPower = UnitPower(unit)
+    if not currentPower or currentPower == 0 then return "0" end
+    
+    -- If it's a massive power pool (like Mana), shorten it cleanly to 'k' or 'm'
+    if currentPower >= 1000000 then
+        return string.format("%.1fm", currentPower / 1000000)
+    elseif currentPower >= 1000 then
+        return string.format("%.1fk", currentPower / 1000)
+    else
+        -- For Focus, Rage, and Energy, leave it as a clean raw integer
+        return tostring(currentPower)
+    end
+end
+
 -- Name tag — truncated to 16 chars
 oUF.Tags.Events["unchartedui:name"] = "UNIT_NAME_UPDATE"
 oUF.Tags.Methods["unchartedui:name"] = function(unit)
