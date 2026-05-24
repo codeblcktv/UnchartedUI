@@ -162,29 +162,6 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
--- Smart Multi-Class Power Tag (Taint-Free String Hack)
-oUF.Tags.Events["unchartedui:smartpower"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
-oUF.Tags.Methods["unchartedui:smartpower"] = function(unit)
-    local cur = UnitPower(unit)
-    if not cur or cur == 0 then return "0" end
-    
-    -- Convert to text immediately to completely strip Blizzard's secure math lock
-    local powerString = tostring(cur)
-    local length = string.len(powerString)
-    
-    -- Instead of evaluating math, evaluate string length!
-    if length >= 7 then -- 1,000,000+ (Millions/Mana)
-        local millions = cur / 1000000
-        return string.format("%.1fm", millions)
-    elseif length >= 4 then -- 1,000+ (Thousands/Mana/Runic Power)
-        -- Safe fallback for high values using Blizzard's secure internal converter
-        return AbbreviateLargeNumbers(cur)
-    else
-        -- 1 to 3 digits (Focus, Rage, Energy)
-        return powerString
-    end
-end
-
 -- Name tag — truncated to 16 chars
 oUF.Tags.Events["unchartedui:name"] = "UNIT_NAME_UPDATE"
 oUF.Tags.Methods["unchartedui:name"] = function(unit)
@@ -302,7 +279,7 @@ local function Style(self, unit)
     powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
-    self:Tag(powerTxt, "[unchartedui:smartpower]")
+    self:Tag(powerTxt, "curpp")
 
     -- ---- Name text — above the frame ----
     local name = self:CreateFontString(nil, "OVERLAY")
