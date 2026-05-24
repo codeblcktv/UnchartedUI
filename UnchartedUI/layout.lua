@@ -277,18 +277,22 @@ local function Style(self, unit)
     powerTxt:SetTextColor(1, 1, 1, 0.9)
     -- REMOVED self:Tag() to completely eliminate layout engine tag confusion
     
-    -- TAINT-FREE DIRECT HANDLER: Updates text using oUF's safely un-wrapped event variables
+    -- TAINT-FREE DIRECT HANDLER: Checks power type instead of comparing secure numbers
     power.PostUpdate = function(bar, unit, cur, max)
         bar:SetStatusBarColor(GetPowerColor(unit))
         
-        if not cur or cur == 0 then
+        -- If cur is scrubbed by security, grab a clean fallback string value immediately
+        local displayPower = cur or UnitPower(unit) or 0
+        local powerType = UnitPowerType(unit)
+        
+        if displayPower == 0 then
             powerTxt:SetText("0")
-        elseif cur >= 1000000 then
-            powerTxt:SetText(string.format("%.1fm", cur / 1000000))
-        elseif cur >= 1000 then
-            powerTxt:SetText(string.format("%.1fk", cur / 1000))
+        elseif powerType == 0 then -- 0 is always the engine constant for MANA (Large Pools)
+            -- Safe abbreviation without using math comparison operator symbols
+            powerTxt:SetText(string.format("%.1fk", displayPower / 1000))
         else
-            powerTxt:SetText(tostring(cur))
+            -- For Focus, Rage, and Energy, print it safely as a direct string
+            powerTxt:SetText(string.format("%d", displayPower))
         end
     end
     
