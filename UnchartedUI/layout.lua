@@ -254,7 +254,7 @@ local function Style(self, unit)
     self:Tag(hpTxt, "[unchartedui:hp]")
     self.hpTxt = hpTxt
 
-    -- ---- Power bar ----
+   -- ---- Power bar ----
     local power = CreateFrame("StatusBar", nil, self)
     power:SetSize(W, POWER_H)
     power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -1)
@@ -266,13 +266,31 @@ local function Style(self, unit)
     pbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     pbg:SetVertexColor(POWER_BG[1], POWER_BG[2], POWER_BG[3], 1)
 
-    power.PostUpdate = function(bar, unit, cur, max)
-        bar:SetStatusBarColor(GetPowerColor(unit))
-    end
-
     power.frequentUpdates = true
     self.Power = power
 
+    -- Power text — right side of the power bar
+    local powerTxt = power:CreateFontString(nil, "OVERLAY")
+    powerTxt:SetFont(FONT, FONT_SIZE - 1, "OUTLINE")
+    powerTxt:SetPoint("RIGHT", power, "RIGHT", -3, 0)
+    powerTxt:SetJustifyH("RIGHT")
+    powerTxt:SetTextColor(1, 1, 1, 0.9)
+    -- REMOVED self:Tag() to completely eliminate layout engine tag confusion
+    
+    -- TAINT-FREE DIRECT HANDLER: Updates text using oUF's safely un-wrapped event variables
+    power.PostUpdate = function(bar, unit, cur, max)
+        bar:SetStatusBarColor(GetPowerColor(unit))
+        
+        if not cur or cur == 0 then
+            powerTxt:SetText("0")
+        elseif cur >= 1000000 then
+            powerTxt:SetText(string.format("%.1fm", cur / 1000000))
+        elseif cur >= 1000 then
+            powerTxt:SetText(string.format("%.1fk", cur / 1000))
+        else
+            powerTxt:SetText(tostring(cur))
+        end
+    end
     -- Power text — right side of the power bar
     local powerTxt = power:CreateFontString(nil, "OVERLAY")
     powerTxt:SetFont(FONT, FONT_SIZE - 1, "OUTLINE")
