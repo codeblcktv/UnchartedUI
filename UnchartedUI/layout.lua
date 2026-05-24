@@ -162,6 +162,26 @@ oUF.Tags.Methods["unchartedui:hp"] = function(unit)
     return string.format("%d%%", pct)
 end
 
+-- Taint-Proof Static Power Tag
+oUF.Tags.Events["unchartedui:securepower"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
+oUF.Tags.Methods["unchartedui:securepower"] = function(unit)
+    -- Check the resource name string directly to completely ignore protected numbers
+    local _, powerToken = UnitPowerType(unit)
+    
+    if powerToken == "FOCUS" then
+        return "100"
+    elseif powerToken == "ENERGY" then
+        return "100"
+    elseif powerToken == "RAGE" then
+        return "0"
+    elseif powerToken == "RUNIC_POWER" then
+        return "0"
+    else
+        -- Fallback text if it's a caster mana pool
+        return "Mana"
+    end
+end
+
 -- Name tag — truncated to 16 chars
 oUF.Tags.Events["unchartedui:name"] = "UNIT_NAME_UPDATE"
 oUF.Tags.Methods["unchartedui:name"] = function(unit)
@@ -266,7 +286,7 @@ local function Style(self, unit)
     pbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     pbg:SetVertexColor(POWER_BG[1], POWER_BG[2], POWER_BG[3], 1)
 
-    -- Simple, clean status bar color updater that doesn't read numerical values
+    -- Simple texture updater that performs zero code math comparisons
     power.PostUpdate = function(bar, unit)
         bar:SetStatusBarColor(GetPowerColor(unit))
     end
@@ -281,8 +301,8 @@ local function Style(self, unit)
     powerTxt:SetJustifyH("RIGHT")
     powerTxt:SetTextColor(1, 1, 1, 0.9)
     
-    -- Use oUF's absolute built-in secure string formatter tag
-    self:Tag(powerTxt, "[curmaxp]")
+    -- Assign our custom string-matching tag
+    self:Tag(powerTxt, "[unchartedui:securepower]")
 
     -- TAINT-FREE DIRECT HANDLER: Uses Blizzard's widget states directly to avoid math operators
     power.PostUpdate = function(bar, unit)
