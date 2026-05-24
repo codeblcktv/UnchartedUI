@@ -168,7 +168,6 @@ end
 local function Style(self, unit)
 
     -- ---- Frame backdrop ----
-    -- oUF frames don't inherit BackdropTemplate so mixin manually
     Mixin(self, BackdropTemplateMixin)
     self:SetBackdrop({
         bgFile   = "Interface\\Buttons\\WHITE8x8",
@@ -191,10 +190,7 @@ local function Style(self, unit)
     hbg:SetTexture("Interface\\Buttons\\WHITE8x8")
     hbg:SetVertexColor(HEALTH_BG[1], HEALTH_BG[2], HEALTH_BG[3], 1)
 
-    -- Colour update via oUF's Override hook — safer than PostUpdate
-    -- oUF calls this after updating the bar values
     health.PostUpdate = function(bar, unit)
-        -- Only use non-secret boolean APIs here
         if UnitIsPlayer(unit) then
             bar:SetStatusBarColor(GetClassColor(unit))
         elseif UnitIsFriend("player", unit) then
@@ -207,15 +203,14 @@ local function Style(self, unit)
     health.frequentUpdates = true
     self.Health = health
 
-    -- Health percent text — right side, only shows when damaged
+    -- Health percent text — right side
     local hpTxt = health:CreateFontString(nil, "OVERLAY")
     hpTxt:SetFont(FONT, FONT_SIZE, "OUTLINE")
     hpTxt:SetPoint("RIGHT", health, "RIGHT", -3, 0)
     hpTxt:SetJustifyH("RIGHT")
     hpTxt:SetTextColor(1, 1, 1, 0.85)
-    -- oUF tag: show percent only when < 100%
-    -- Health text hidden at full health via mouseover (TODO: mouseover tag)
     self:Tag(hpTxt, "[unchartedui:hp]")
+    self.hpTxt = hpTxt
 
     -- ---- Power bar ----
     local power = CreateFrame("StatusBar", nil, self)
@@ -231,7 +226,6 @@ local function Style(self, unit)
 
     power.PostUpdate = function(bar, unit, cur, max)
         bar:SetStatusBarColor(GetPowerColor(unit))
-        -- Don't compare secret values — let oUF handle bar visibility
     end
 
     power.frequentUpdates = true
@@ -255,7 +249,6 @@ local function Style(self, unit)
     if unit == "player" then
         self:Tag(name, "[unchartedui:name]")
     else
-        -- Target: name + level
         self:Tag(name, "[unchartedui:targetname]")
     end
     self.Name = name
@@ -298,14 +291,13 @@ local function Style(self, unit)
     castIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     cast.Icon = castIcon
 
-    -- Icon border — parented to castbar frame, not the texture
+    -- Icon border
     local iconBorder = CreateFrame("Frame", nil, cast, "BackdropTemplate")
     iconBorder:SetSize(CAST_H + 2, CAST_H + 2)
     iconBorder:SetPoint("CENTER", castIcon, "CENTER", 0, 0)
     iconBorder:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
     iconBorder:SetBackdropBorderColor(BORDER_COL[1], BORDER_COL[2], BORDER_COL[3], 1)
 
-    -- Colour based on interruptible
     cast.PostCastStart = function(bar, unit)
         local _, _, _, _, _, _, _, notInterruptible = UnitCastingInfo(unit)
         if notInterruptible then
@@ -318,8 +310,7 @@ local function Style(self, unit)
 
     self.Castbar = cast
 
-    -- ---- Frame size ----
-    -- oUF sizes the frame; we need height = health + 1px gap + power
+    -- Frame size calculation
     self:SetSize(W, HEALTH_H + 1 + POWER_H)
 end
 
@@ -340,13 +331,11 @@ local function PetStyle(self, unit)
     health:SetStatusBarTexture(TEX)
     health:SetStatusBarColor(0.67, 0.83, 0.45)
 
-    -- Background texture
     local hbg = health:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints(health)
     hbg:SetTexture(TEX)
     hbg:SetVertexColor(HEALTH_BG[1], HEALTH_BG[2], HEALTH_BG[3], 1)
 
-    -- oUF drives SetValue/SetMinMaxValues — we just need PostUpdate to recolor
     health.PostUpdate = function(bar, unit)
         bar:SetStatusBarTexture(TEX)
         bar:SetStatusBarColor(0.67, 0.83, 0.45)
@@ -356,7 +345,6 @@ local function PetStyle(self, unit)
     self.Health = health
     self:SetSize(PET_W, PET_H)
 
-    -- Name above bar
     local name = self:CreateFontString(nil, "OVERLAY")
     name:SetFont(FONT, FONT_SIZE - 1, "")
     name:SetTextColor(0.70, 0.70, 0.70, 1)
@@ -372,17 +360,12 @@ end
 oUF:RegisterStyle("UnchartedUI", Style)
 oUF:SetActiveStyle("UnchartedUI")
 
--- Player frame — BOTTOM,UIParent,BOTTOM,0,Y puts it centered at Y from bottom
 local player = oUF:Spawn("player", "UnchartedUI_Player")
 player:SetPoint("BOTTOM", UIParent, "BOTTOM", PLAYER_X, PLAYER_Y)
 
--- Target frame — anchored relative to player frame
--- BOTTOMLEFT of target = BOTTOMLEFT of player + (TARGET_X right, TARGET_Y up)
 local target = oUF:Spawn("target", "UnchartedUI_Target")
 target:SetPoint("BOTTOMLEFT", player, "BOTTOMLEFT", TARGET_X, TARGET_Y)
 
--- Pet frame — slim bar centered below player frame
--- Sits below the castbar gap + castbar height
 oUF:RegisterStyle("UnchartedUI_Pet", PetStyle)
 oUF:SetActiveStyle("UnchartedUI_Pet")
 local pet = oUF:Spawn("pet", "UnchartedUI_Pet")
@@ -394,18 +377,12 @@ pet:SetPoint("TOP", player, "BOTTOM", PET_X, -(CAST_GAP + CAST_H + PET_GAP))
 local hideFrame = CreateFrame("Frame")
 hideFrame:RegisterEvent("PLAYER_LOGIN")
 hideFrame:SetScript("OnEvent", function()
-    -- 1. Use oUF's built-in engine to hide the core unit frames safely
     if oUF and oUF.HideBlizzard then
         oUF:HideBlizzard("player")
         oUF:HideBlizzard("target")
         oUF:HideBlizzard("pet")
     else
-        -- Fallback visibility driver method if oUF hook is bypassed
-        local framesToHide = {
-            "PlayerFrame",
-            "TargetFrame",
-            "PetFrame",
-        }
+        local framesToHide = { "PlayerFrame", "TargetFrame", "PetFrame" }
         for _, frameName in ipairs(framesToHide) do
             local f = _G[frameName]
             if f then
@@ -415,14 +392,12 @@ hideFrame:SetScript("OnEvent", function()
         end
     end
 
-    -- 2. Hide Modern Retail Castbar (PlayerCastingBarFrame)
     if PlayerCastingBarFrame then
         PlayerCastingBarFrame:UnregisterAllEvents()
         RegisterAttributeDriver(PlayerCastingBarFrame, "state-visibility", "hide")
         PlayerCastingBarFrame:Hide()
     end
 
-    -- 3. Hide Target of Target
     if TargetFrameToT then
         RegisterAttributeDriver(TargetFrameToT, "state-visibility", "hide")
         TargetFrameToT:Hide()
@@ -443,15 +418,11 @@ local function SetDraggable(frame, name, draggable)
         frame:SetScript("OnDragStart", function(f) f:StartMoving() end)
         frame:SetScript("OnDragStop",  function(f)
             f:StopMovingOrSizing()
-            -- Save position
             if not UnchartedUIDB then UnchartedUIDB = {} end
             if not UnchartedUIDB.positions then UnchartedUIDB.positions = {} end
             local p, _, rp, x, y = f:GetPoint()
-            UnchartedUIDB.positions[name] = {
-                p, rp, math.floor(x), math.floor(y)
-            }
+            UnchartedUIDB.positions[name] = { p, rp, math.floor(x), math.floor(y) }
         end)
-        -- Label
         if not frame.moveLabel then
             local lbl = frame:CreateFontString(nil, "OVERLAY")
             lbl:SetFont(FONT, 9, "OUTLINE")
@@ -470,7 +441,6 @@ local function SetDraggable(frame, name, draggable)
     end
 end
 
--- Restore saved positions on load
 local restoreFrame = CreateFrame("Frame")
 restoreFrame:RegisterEvent("PLAYER_LOGIN")
 restoreFrame:SetScript("OnEvent", function()
@@ -485,7 +455,6 @@ restoreFrame:SetScript("OnEvent", function()
     end
 end)
 
--- Slash commands
 SLASH_UNCHARTEDUI1 = "/uui"
 SlashCmdList["UNCHARTEDUI"] = function(msg)
     local cmd = msg and msg:lower():match("^%s*(.-)%s*$") or ""
